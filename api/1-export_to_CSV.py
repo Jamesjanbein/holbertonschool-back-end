@@ -1,31 +1,33 @@
 #!/usr/bin/python3
-"""Script to export data in the CSV format."""
+'''export data in the CSV format.'''
 import csv
 import requests
 from sys import argv
 
-API_URL = 'https://jsonplaceholder.typicode.com'
-
-
 if __name__ == '__main__':
-    USER_ID = argv[1]
+    user_id = argv[1]
+    url = 'https://jsonplaceholder.typicode.com'
+    response = requests.get(
+        f'{url}/users/{user_id}/todos',
+        params={'_expand': 'user'}
+    )
 
-    # User information
-    user_response = requests.get(f"{API_URL}/users/{USER_ID}").json()
+    if response.status_code == 200:
+        data = response.json()
+        user_name = data[0]['user']['username']
 
-    # Todo list for the given user
-    todo_response = requests.get(f"{API_URL}/todos?userId={USER_ID}").json()
+        with open(f'{user_id}.csv', 'w',
+                  encoding='utf-8', newline='') as file:
+            wr = csv.writer(file, quoting=csv.QUOTE_ALL)
+            for task in data:
+                wr.writerow(
+                    [
+                        f'{user_id}',
+                        f'{user_name}',
+                        f'{task["completed"]}',
+                        f'{task["title"]}'
+                    ]
+                )
 
-    # Write to CSV file
-    with open(f"{USER_ID}.csv", mode='w') as csv_file:
-        writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-
-        for task in todo_response:
-            writer.writerow([
-                user_response['id'],
-                user_response['username'],
-                task['completed'],
-                task['title']
-            ])
-
-    print(f"Data has been exported to {USER_ID}.csv")
+    else:
+        print(f"Error: {response.status_code}")

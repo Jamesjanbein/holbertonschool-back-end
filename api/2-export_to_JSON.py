@@ -1,35 +1,31 @@
 #!/usr/bin/python3
-"""Script to export data in the JSON format."""
+'''export data in the CSV format.'''
 import json
 import requests
 from sys import argv
 
-API_URL = 'https://jsonplaceholder.typicode.com'
-
-
 if __name__ == '__main__':
-    USER_ID = argv[1]
+    user_id = argv[1]
+    url = 'https://jsonplaceholder.typicode.com'
+    response = requests.get(
+        f'{url}/users/{user_id}/todos',
+        params={'_expand': 'user'}
+    )
 
-    # User information
-    user_response = requests.get(f"{API_URL}/users/{USER_ID}").json()
+    if response.status_code == 200:
+        data = response.json()
+        dict = {user_id: []}
 
-    # Todo list for the given user
-    todo_response = requests.get(f"{API_URL}/todos?userId={USER_ID}").json()
+        with open(f'{user_id}.json', 'w',
+                  encoding='utf-8') as file:
+            for task in data:
+                actual_dict = {
+                    'task': task['title'],
+                    'completed': task['completed'],
+                    'username': task['user']['username']
+                }
+                dict[user_id].append(actual_dict)
+            json.dump(dict, file)
 
-    # Prepare data for export
-    data = {
-        USER_ID: [
-            {
-                "task": task['title'],
-                "completed": task['completed'],
-                "username": user_response['username']
-            }
-            for task in todo_response
-        ]
-    }
-
-    # Write to JSON file
-    with open(f"{USER_ID}.json", mode='w') as json_file:
-        json.dump(data, json_file)
-
-    print(f"Data has been exported to {USER_ID}.json")
+    else:
+        print(f"Error: {response.status_code}")

@@ -1,30 +1,33 @@
 #!/usr/bin/python3
-"""Script to export data in the JSON format."""
+'''export data in the CSV format.'''
 import json
 import requests
-
-API_URL = 'https://jsonplaceholder.typicode.com'
+from sys import argv
 
 if __name__ == '__main__':
-    # User information
-    user_response = requests.get(f"{API_URL}/users/").json()
+    url = 'https://jsonplaceholder.typicode.com'
+    response = requests.get(
+        f'{url}/todos',
+        params={'_expand': 'user'}
+    )
 
-    # Todo list for the given user
-    todo_response = requests.get(f"{API_URL}/todos").json()
+    if response.status_code == 200:
+        data = response.json()
+        dictionary = dict()
 
-    # Create dictionary of tasks grouped by user
-    task_by_user = {}
-    for task in todo_response:
-        user_id = task['userId']
-        if user_id not in task_by_user:
-            task_by_user[user_id] = []
-        task_by_user[user_id].append({
-            "task": task['title'],
-            "completed": task['completed'],
-            "username": next(user[
-                'username'] for user in user_response if user['id'] == user_id)
-        })
+        for task in data:
+            dictionary[task['userId']] = []
 
-    # Write to JSON file
-    with open("todo_all_employees.json", mode='w') as json_file:
-        json.dump(task_by_user, json_file)
+        with open('todo_all_employees.json', 'w',
+                  encoding='utf-8') as file:
+            for task in data:
+                actual_dict = {
+                    'username': task['user']['username'],
+                    'task': task['title'],
+                    'completed': task['completed']
+                }
+                dictionary[task['userId']].append(actual_dict)
+            json.dump(dictionary, file, indent=4)
+
+    else:
+        print(f"Error: {response.status_code}")
