@@ -1,28 +1,39 @@
 #!/usr/bin/python3
-'''returns information about his/her TODO list progress.'''
+"""
+Task 0:
+Write a Python script that, for a given employee ID,
+returns information about his/her TODO list progress.
+"""
+
 import requests
 from sys import argv
 
-if __name__ == '__main__':
-    url = 'https://jsonplaceholder.typicode.com'
-    user_id = argv[1]
-    response = requests.get(
-        f'{url}/users/{user_id}/todos',
-        params={'_expand': 'user'}
-    )
+if __name__ == "__main__":
 
-    if response.status_code == 200:
-        data = response.json()
-        name = data[0]['user']['name']
-        tasks_ok = [task for task in data if task['completed']]
-        n_task_ok = len(tasks_ok)
-        total_task = len(data)
+    # format: Employee EMPLOYEE_NAME is done with tasks(NUMBER_OF_DONE_TASKS/
+    # TOTAL_NUMBER_OF_TASKS):
+    # format: tab+space TASK_TITLE
+    id = argv[1]
+    done_task = 0
+    total_task = 0
+    todo_list_complete = []
 
-        first_str = f"Employee {name} is done with tasks"
+    employee_name = requests.get(
+        f'https://jsonplaceholder.typicode.com/users/{id}')
+    employee_todo = requests.get(
+        f'https://jsonplaceholder.typicode.com/users/{id}/todos')
 
-        print(f"{first_str}({n_task_ok}/{total_task}):")
-        for task in tasks_ok:
-            print(f"\t {task['title']}")
+    for todo in employee_todo.json():
+        if todo.get('completed') is True:
+            done_task += 1
+            total_task += 1
+            todo_list_complete.append(todo.get('title'))
+        else:
+            total_task += 1
 
-    else:
-        print(f"Error: {response.status_code}")
+    name = employee_name.json()['name']
+
+    print(
+        f"Employee {name} is done with tasks({done_task}/{total_task}):")
+    for task in todo_list_complete:
+        print(f"\t {task}")

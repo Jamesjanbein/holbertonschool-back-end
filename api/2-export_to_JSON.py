@@ -1,31 +1,49 @@
 #!/usr/bin/python3
-'''export data in the CSV format.'''
+"""
+Task 2:
+export data in the JSON format.
+"""
 import json
 import requests
 from sys import argv
 
-if __name__ == '__main__':
-    user_id = argv[1]
-    url = 'https://jsonplaceholder.typicode.com'
-    response = requests.get(
-        f'{url}/users/{user_id}/todos',
-        params={'_expand': 'user'}
-    )
 
-    if response.status_code == 200:
-        data = response.json()
-        dict = {user_id: []}
+if __name__ == "__main__":
 
-        with open(f'{user_id}.json', 'w',
-                  encoding='utf-8') as file:
-            for task in data:
-                actual_dict = {
-                    'task': task['title'],
-                    'completed': task['completed'],
-                    'username': task['user']['username']
-                }
-                dict[user_id].append(actual_dict)
-            json.dump(dict, file)
+    id = argv[1]
 
-    else:
-        print(f"Error: {response.status_code}")
+    employee_name = requests.get(
+        f'https://jsonplaceholder.typicode.com/users/{id}').json()
+    employee_todos = requests.get(
+        f'https://jsonplaceholder.typicode.com/users/{id}/todos').json()
+
+    user_name = employee_name['username']
+    file_name = f"{id}.json"
+
+    dict_user = {id: []}
+    for todo in employee_todos:
+        dict_user[id].append({
+            "task": todo.get("title"),
+            "completed": todo.get("completed"),
+            "username": user_name
+        })
+
+    # user_dict = {
+    #     f"{id}.json": [{
+    #         "task": task.get("title"),
+    #         "completed": task.get("completed"),
+    #         "username": user_name
+    #     } for task in todo_data]
+    # }
+
+    with open(file_name, "w", encoding="utf-8") as file:
+        json.dump(dict_user, file, indent=4)
+
+    # { "USER_ID": [
+    # {
+    # "task": "TASK_TITLE",
+    # "completed": TASK_COMPLETED_STATUS,
+    # "username": "USERNAME"
+    # }
+    # ]
+    # }
